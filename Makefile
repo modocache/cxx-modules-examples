@@ -1,5 +1,6 @@
 CC := ${HOME}/Source/llvm/git/dev/llvm-project/build/bin/clang++
 CXXFLAGS := -std=c++2a -stdlib=libc++
+GIT := git
 
 HOST_OS := $(shell uname -s)
 ifeq ($(HOST_OS),Darwin)
@@ -11,10 +12,16 @@ ROOTDIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 C20MD = ${ROOTDIR}/cxx20-modules
 HUD = ${C20MD}/atom-style-header-units
 
-clean:
-	rm -f foo.o foo.pcm main bar.h.gch header.pcm
 
-cxx20-modules: cxx20-modules-001
+clean:
+	git -C ${ROOTDIR} clean -fxd
+
+
+cxx20-modules: \
+	cxx20-modules-001 \
+	cxx20-modules-002 \
+	cxx20-modules-atom-style-header-units
+
 
 cxx20-modules-001: SRCDIR = ${C20MD}/001-using-a-cppm
 cxx20-modules-001:
@@ -37,8 +44,41 @@ cxx20-modules-001:
 		${SRCDIR}/foo.o ${SRCDIR}/main.cpp \
 		-o ${SRCDIR}/main
 
+cxx20-modules-002: SRCDIR = ${C20MD}/002-multiple-cppm
+cxx20-modules-002:
+	# 1. Pre-compile module interface source files 'foo.cppm' and 'bar.cppm'
+	#    in the same driver invocation. We cannot specify the '-o' path of two
+	#    outputs ('foo.pcm' and 'bar.pcm'), so instead we leave this up to the
+	#    driver. By 'cd'ing into our source directory we ensure the compiler
+	#    places the build artifacts there.
+	cd ${SRCDIR}; \
+		${CC} \
+			${CXXFLAGS} \
+			--precompile \
+			foo.cppm bar.cppm;
+	# 2. Compile C++ source file 'foo.cppm' into object file 'foo.o'.
+	${CC} \
+		${CXXFLAGS} \
+		-c \
+		${SRCDIR}/foo.cppm \
+		-o ${SRCDIR}/foo.o
+	# 3. Compile C++ source file 'bar.cppm' into object file 'bar.o'.
+	${CC} \
+		${CXXFLAGS} \
+		-c \
+		${SRCDIR}/bar.cppm \
+		-o ${SRCDIR}/bar.o
+	# 4. Compile and link 'main'.
+	${CC} \
+		${CXXFLAGS} \
+		-fmodule-file=${SRCDIR}/foo.pcm \
+		-fmodule-file=${SRCDIR}/bar.pcm \
+		${SRCDIR}/foo.o ${SRCDIR}/bar.o ${SRCDIR}/main.cpp \
+		-o ${SRCDIR}/main
 
-cxx20-modules-atom-style-header-units: cxx20-modules-atom-style-header-units-001
+
+cxx20-modules-atom-style-header-units: \
+	cxx20-modules-atom-style-header-units-001
 
 cxx20-modules-atom-style-header-units-001: SRCDIR = ${HUD}/001-using-a-header-unit
 cxx20-modules-atom-style-header-units-001:
