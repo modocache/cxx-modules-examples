@@ -13,6 +13,8 @@ C20MD = ${ROOTDIR}/cxx20-modules
 HUD = ${C20MD}/atom-style-header-units
 
 
+all: clean cxx20-modules clang-implicit-modules
+
 clean:
 	git -C ${ROOTDIR} clean -fxd
 
@@ -116,3 +118,7 @@ cxx20-modules-atom-style-header-units-001:
 		-I${SRCDIR}/bar \
 		${SRCDIR}/foo.o ${SRCDIR}/main.cpp \
 		-o ${SRCDIR}/main
+
+
+clang-implicit-modules:
+	echo "TODO"
