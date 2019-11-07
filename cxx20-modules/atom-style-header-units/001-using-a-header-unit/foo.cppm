@@ -1,6 +1,6 @@
 export module foo;
 
-import "bar.h";
+import "bar/bar.h";
 
 namespace foo {
   export const char *version() {
