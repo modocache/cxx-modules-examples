@@ -1,3 +1,4 @@
 *.pcm
 *.o
 main
+cache

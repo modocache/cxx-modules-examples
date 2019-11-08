@@ -11,6 +11,7 @@ endif
 ROOTDIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 C20MD = ${ROOTDIR}/cxx20-modules
 HUD = ${C20MD}/atom-style-header-units
+CIMD = ${ROOTDIR}/clang-implicit-modules
 
 
 all: clean cxx20-modules clang-implicit-modules
@@ -120,5 +121,17 @@ cxx20-modules-atom-style-header-units-001:
 		-o ${SRCDIR}/main
 
 
-clang-implicit-modules:
-	echo "TODO"
+clang-implicit-modules: \
+	clang-implicit-modules-001
+
+clang-implicit-modules-001: SRCDIR = ${CIMD}/001-on-the-fly-module-compilation
+clang-implicit-modules-001:
+	${CC} \
+		${CXXFLAGS} \
+		-fmodules \
+		-fno-implicit-module-maps \
+		-fmodule-map-file=${SRCDIR}/foo/module.modulemap \
+		-fmodules-cache-path=${SRCDIR}/cache \
+		-I${SRCDIR}/foo \
+		${SRCDIR}/main.cpp \
+		-o ${SRCDIR}/main
